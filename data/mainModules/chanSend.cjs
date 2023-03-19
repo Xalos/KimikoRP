@@ -40,17 +40,10 @@ module.exports = {
         sendMsgToChan(this.client,idList.help,msg);	
     },
     ticket: function (ticketData) {
-        console.log("YESFA");
-        console.log(ticketData);
-        console.log(ticketData[0]);
-        console.log(idList[ticketData[0]]);
         sendMsgToChan(this.client,idList[ticketData[0]],ticketData[1]);	
     },
-    userTicket: function (msg) {
-        sendMsgToChan(this.client,idList.userTicket,msg);	
-    },
-    askTicket: function (msg) {
-        sendMsgToChan(this.client,idList.askTicket,msg);	
+    askTicket: function (ticketData) {
+        sendMsgToChan(this.client,idList.askTicket,ticketData[1]);	
     },
     rp: function (message,msg) {
         message.delete();

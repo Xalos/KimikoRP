@@ -47,9 +47,9 @@ client.on('messageCreate', async (message) => {
 	
 		if (mContent == "!test")send.rp(message,await embed.rp(rpData));
 
-		if (mContent.startsWith("!ticket "))send.ticket(await embed.ticket(message));
+		if (mContent.startsWith("!ticket "))send.ticket(await embed.ticket(message,false));
 		
-		if (mContent.startsWith("!ask "))send.ask(await embed.ticket(message));
+		if (mContent.startsWith("!ask "))send.askTicket(await embed.ticket(message,true));
 		
        
     

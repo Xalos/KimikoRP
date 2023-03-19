@@ -19,11 +19,13 @@ module.exports = {
          return embedResult;
     },
     
-    ticket: async function (message) {
+    ticket: async function (message,ask) {
 
         prefix = '!';
 
+        
         var ticketMsg = message.content.replace(prefix+"ticket ","");
+        var ticketMsg = message.content.replace(prefix+"ask ","");
 	    var tag = message.author.tag;
 
         //Regarde si l'utillisateur et l'owner un l'admin ou un simple utilisateur, et ajoute un facteur de priorité au ticket en fonction de cela
@@ -35,13 +37,23 @@ module.exports = {
         const embedResult = await new this.EmbedBuilder()
 
             .setTitle("User : **__"+tag+"__**               Serveur **__"+message.guildId+"__**")
-            .setColor(0xFFFF00)
-            //.setDescription()
             .addFields(
                 { name: '__ID Utilisateur__', value: message.author.id },
                 { name: '__Description du ticket__', value: ticketMsg },
             );
+
+            switch(defcon) {
+                case "ownerTicket":
+                    embedResult.setColor(0xFFFF00);
+                  break;
+                case "userTicket":
+                    embedResult.setColor(0x008000);
+                  break;
+              }
+
+            if(ask != null)embedResult.setColor(0x008000);
             
+            console.log(embedResult);
      return [defcon,embedResult];
     }
   };
