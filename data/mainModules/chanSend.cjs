@@ -11,6 +11,7 @@ const idList = {
     help : "548168730681540612",
     
     ownerTicket : "540154188009832449",
+    adminTicket : '1087022547687718922',
     userTicket : "539713994496409601",
     askTicket : "540156618588028938",
     
@@ -22,40 +23,49 @@ const idList = {
 };
 
 module.exports = {
+    
     log: function (msg) {
-        sendMsgToChan(idList.log,msg);
+        sendMsgToChan(this.client,idList.log,msg);
     },
     image: function (msg) {
-        sendMsgToChan(idList.image,msg);
+        sendMsgToChan(this.client,idList.image,msg);
     },
     addServ: function (msg) {
-        sendMsgToChan(idList.addServ,msg);	
+        sendMsgToChan(this.client,idList.addServ,msg);	
     },
     delServ: function (msg) {
-        sendMsgToChan(idList.delServ,msg);	
+        sendMsgToChan(this.client,idList.delServ,msg);	
     },
     help: function (msg) {
-        sendMsgToChan(idList.help,msg);	
+        sendMsgToChan(this.client,idList.help,msg);	
     },
-    ownerTicket: function (msg) {
-        sendMsgToChan(idList.ownerTicket,msg);	
+    ticket: function (ticketData) {
+        console.log("YESFA");
+        console.log(ticketData);
+        console.log(ticketData[0]);
+        console.log(idList[ticketData[0]]);
+        sendMsgToChan(this.client,idList[ticketData[0]],ticketData[1]);	
     },
     userTicket: function (msg) {
-        sendMsgToChan(idList.userTicket,msg);	
+        sendMsgToChan(this.client,idList.userTicket,msg);	
     },
     askTicket: function (msg) {
-        sendMsgToChan(idList.askTicket,msg);	
+        sendMsgToChan(this.client,idList.askTicket,msg);	
     },
     rp: function (message,msg) {
         message.delete();
         message.channel.send({ embeds: [msg]});
     }
   };
-
-
-  function sendMsgToChan(ChanId,msg){
-    this.client.channels.cache.get(ChanId).send(msg);
-   //this.client.c
-  }
-  
  
+  async function sendMsgToChan(client,ChanId,msg){
+    try {  
+        console.log("YESF");
+        console.log(ChanId);
+        if (typeof msg === 'string')await client.guilds.cache.get(idList.server).channels.cache.get(ChanId).send(msg);
+        else await client.guilds.cache.get(idList.server).channels.cache.get(ChanId).send({ embeds: [msg]});
+    
+    } catch (error) {console.error(error);};    
+	
+
+  }

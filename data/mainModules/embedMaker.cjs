@@ -17,9 +17,32 @@ module.exports = {
             if(rpData.body != null && rpData.body != "")embedResult.setThumbnail(rpData.body)
 
          return embedResult;
+    },
+    
+    ticket: async function (message) {
+
+        prefix = '!';
+
+        var ticketMsg = message.content.replace(prefix+"ticket ","");
+	    var tag = message.author.tag;
+
+        //Regarde si l'utillisateur et l'owner un l'admin ou un simple utilisateur, et ajoute un facteur de priorité au ticket en fonction de cela
+        var defcon = "userTicket";
+        //if (message.member.permissionsIn(message.channel).has("ADMINISTRATOR"))defcon = "adminTicket";
+        if (message.guild.ownerId == message.author.id)defcon = "ownerTicket";
+        
+
+        const embedResult = await new this.EmbedBuilder()
+
+            .setTitle("User : **__"+tag+"__**               Serveur **__"+message.guildId+"__**")
+            .setColor(0xFFFF00)
+            //.setDescription()
+            .addFields(
+                { name: '__ID Utilisateur__', value: message.author.id },
+                { name: '__Description du ticket__', value: ticketMsg },
+            );
+            
+     return [defcon,embedResult];
     }
-
-
-
   };
   
