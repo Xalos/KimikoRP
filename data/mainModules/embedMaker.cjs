@@ -23,9 +23,8 @@ module.exports = {
 
         prefix = '!';
 
-        
         var ticketMsg = message.content.replace(prefix+"ticket ","");
-        var ticketMsg = message.content.replace(prefix+"ask ","");
+        var ticketMsg = ticketMsg .replace(prefix+"ask ","");
 	    var tag = message.author.tag;
 
         //Regarde si l'utillisateur et l'owner un l'admin ou un simple utilisateur, et ajoute un facteur de priorité au ticket en fonction de cela
@@ -47,13 +46,12 @@ module.exports = {
                     embedResult.setColor(0xFFFF00);
                   break;
                 case "userTicket":
-                    embedResult.setColor(0x008000);
+                    embedResult.setColor(0x006EDD);
                   break;
               }
 
-            if(ask != null)embedResult.setColor(0x008000);
+            if(ask)embedResult.setColor(0x008000);
             
-            console.log(embedResult);
      return [defcon,embedResult];
     }
   };
