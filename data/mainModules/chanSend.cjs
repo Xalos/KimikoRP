@@ -46,6 +46,7 @@ module.exports = {
         sendMsgToChan(this.client,idList.askTicket,ticketData[1]);	
     },
     rp: function (message,msg) {
+    
         message.delete();
         message.channel.send({ embeds: [msg]});
     }

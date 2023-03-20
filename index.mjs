@@ -11,11 +11,16 @@ const client = new Client ({intents:[3276799]})
 
 const send = require("./data/mainModules/chanSend.cjs");
 const embed = require("./data/mainModules/embedMaker.cjs");
+const utils = require("./data/mainModules/utils.cjs");
+const rpData = require("./data/mainModules/rpDataMaker.cjs");
 
 const { PermissionFlagsBits } = require('discord-api-types/v10');
 
 const { clientId, guildId, token } = require('./config.json');
 
+const prefix = "!";
+	
+	embed.Clear = rpData.cClear = utils.cClear;	
 	send.client = client;
 	embed.EmbedBuilder = EmbedBuilder;
 	embed.PermissionFlagsBits = PermissionFlagsBits;
@@ -40,22 +45,42 @@ client.on('messageCreate', async (message) => {
 			firstname: 'Hope',
 			lastname: 'Starfall',
 			color: 0x0099FF,
-			message: 'Bonjour je suis Hope',
-			//body: "https://cdn.discordapp.com/attachments/539713961784770570/612269668480188416/file.jpg",
+			message: mContent,
+			body: "https://cdn.discordapp.com/attachments/539713961784770570/612269668480188416/file.jpg",
 			head: "",
 		};
-	
-		if (mContent == "!test")send.rp(message,await embed.rp(rpData));
+
+		var listData = [
+
+			["Aria","Khaly",'238177806729740288'],
+			["Aria","Khaly",'416326839519150080'],
+			["Aria","Khaly",'416326839519150080'],
+			["Aria","Khaly",'238177806729740288'],
+			["Aria","Khaly",''],
+			["Aria","Khaly",'238177806729740288']
+
+		];
+		
+		if (mContent.startsWith("!test"))send.rp(message,await embed.rp(rpData));
+
+		if (mContent.startsWith("!des "))send.rp(message,await embed.description(rpData));
+
+		if (mContent.startsWith("!desmj "))send.rp(message,await embed.description(rpData,"mj"));
+
+		if (mContent.startsWith("!see "))send.rp(message,await embed.see(rpData,"Joueur"));
+
+		if (mContent.startsWith("!playerlist"))send.rp(message,await embed.playerlist(listData,"Joueur",message,true));
+
+		if (mContent.startsWith("!mylist"))send.rp(message,await embed.playerlist(listData,"Joueur",message,false));
 
 		if (mContent.startsWith("!ticket "))send.ticket(await embed.ticket(message,false));
 		
-		if (mContent.startsWith("!ask "))send.askTicket(await embed.ticket(message,true));
+		if (mContent.startsWith("!ask "))send.askTicket(await embed.ticket((message,"!ask "),true));
 		
        
     
 	}catch (error) { console.error(error);};
-    
-     
+		
 });
 
 client.login(token);
