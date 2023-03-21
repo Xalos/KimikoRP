@@ -3,16 +3,15 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
 
-const fs = require('node:fs');
-const path = require('node:path');
-
 const { Client,intents, Collection, Events, GatewayIntentBits,EmbedBuilder,Guild } = require('discord.js');
 const client = new Client ({intents:[3276799]})
+
 
 const send = require("./data/mainModules/chanSend.cjs");
 const embed = require("./data/mainModules/embedMaker.cjs");
 const utils = require("./data/mainModules/utils.cjs");
 const rpData = require("./data/mainModules/rpDataMaker.cjs");
+const diceRoll = require("./data/mainModules/diceRoll.cjs");
 
 const { PermissionFlagsBits } = require('discord-api-types/v10');
 
@@ -60,18 +59,44 @@ client.on('messageCreate', async (message) => {
 			["Aria","Khaly",'238177806729740288']
 
 		];
+
+		var listDataStats = [
+
+			["Force","$for",'1d100'],
+			["Force","$for",'1d100'],
+			["Force","$for",'1d100'],
+			["Force","$for",'1d100'],
+			["Force","$for",'1d100'],
+			["Force","$for",'1d100'],
+			["Force","$for",'1d100'],
+			
+
+		];
+
+
+			
 		
 		if (mContent.startsWith("!test"))send.rp(message,await embed.rp(rpData));
+
 
 		if (mContent.startsWith("!des "))send.rp(message,await embed.description(rpData));
 
 		if (mContent.startsWith("!desmj "))send.rp(message,await embed.description(rpData,"mj"));
 
+
+		if (mContent.startsWith("!roll "))send.rp(message,await embed.roll(await diceRoll.classicRoll(message),message.author.username));
+
+
+		if (mContent.startsWith("!statslist"))send.rp(message,await embed.statsList(listDataStats));
+
+
 		if (mContent.startsWith("!see "))send.rp(message,await embed.see(rpData,"Joueur"));
+
 
 		if (mContent.startsWith("!playerlist"))send.rp(message,await embed.playerlist(listData,"Joueur",message,true));
 
 		if (mContent.startsWith("!mylist"))send.rp(message,await embed.playerlist(listData,"Joueur",message,false));
+
 
 		if (mContent.startsWith("!ticket "))send.ticket(await embed.ticket(message,false));
 		
@@ -79,7 +104,19 @@ client.on('messageCreate', async (message) => {
 		
        
     
-	}catch (error) { console.error(error);};
+	}catch (error) { 
+
+		try {
+			if(error[0] == "ErrorReply"){
+				console.error(error[1]);
+				await send.error(error[2],error[1]);
+			}
+			else console.error(error);
+		}
+		catch (error){
+			console.error(error)
+		}
+	};
 		
 });
 

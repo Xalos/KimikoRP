@@ -11,6 +11,8 @@ const hexSet = {
     blue : 0x006EDD,
     green : 0x008000,
     jade : 0x41F495,
+    purple : 0x8C198C,
+    kingGold : 0xFF9900,
 
 };
 
@@ -67,6 +69,7 @@ module.exports = {
          return embedResult;
     },
 
+    //Make the Embed of a list of all Character on the server, or only the one related to the message author
     playerlist: async function (listData,type,message,global) {
 
         var userName = message.author.username;
@@ -78,7 +81,7 @@ module.exports = {
             
             if(global || listData[i][2] == idUser){
                 listSize++;
-                listText += "**"+listData[i][0]+s+listData[i][1];
+                listText += "**"+listData[i][0]+" "+listData[i][1];
                 if(listData[i][2] == idUser && global)listText += " :sparkling_heart:";
                 listText += "**\n";
             }
@@ -92,6 +95,49 @@ module.exports = {
 		   
 		    if (!global)embedResult.setTitle("Liste des personnages de "+userName+" **["+listSize+"]**");
             else embedResult.setTitle("Liste des "+type+" **["+listSize+"]**");
+
+         return embedResult;
+    },
+
+    statsList: async function (listData,type,message,global) {
+
+        //var userName = message.author.username;
+        // var idUser = message.author.id;
+        var listSize = 0;
+        var listText = "";
+
+        for (i=0;i < listData.length;i++){
+
+                listSize++;
+                listText += "__"+listData[i][0]+"__ **"+listData[i][1]+"** "+listData[i][2];
+                listText += "\n";
+            
+        }
+
+        const embedResult = await new this.EmbedBuilder()
+
+            //Affiche l'image, le nom et la couleur du personnage
+            .setColor(hexSet.kingGold)
+            .setDescription(listText)
+		    .setTitle("Liste des Caractéristiques **["+listSize+"]**");
+          
+
+         return embedResult;
+    },
+
+    //Make the Embed of a classic dice roll
+    roll: async function (rollData,userName) {
+
+        rollMessage = rollData[0];
+        rollRolled = rollData[1];
+        rollResult = rollData[2];
+
+        const embedResult = await new this.EmbedBuilder()
+            
+            //Affiche l'image, le nom et la couleur du personnage
+            .setTitle("Jet de **"+userName+"**")
+            .setColor(hexSet.purple)
+		    .setDescription(rollMessage+" = ["+rollRolled+"] = **"+rollResult+"**");
 
          return embedResult;
     },

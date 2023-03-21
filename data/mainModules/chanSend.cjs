@@ -49,13 +49,16 @@ module.exports = {
     
         message.delete();
         message.channel.send({ embeds: [msg]});
-    }
+    },
+    error: function (message,msg) {
+        message.delete();
+        message.channel.send(message.member.user.toString()+" "+msg).then(msg => {setTimeout(() => msg.delete(), 10000)}).catch(console.error);
+     }
   };
  
   async function sendMsgToChan(client,ChanId,msg){
     try {  
-        console.log("YESF");
-        console.log(ChanId);
+
         if (typeof msg === 'string')await client.guilds.cache.get(idList.server).channels.cache.get(ChanId).send(msg);
         else await client.guilds.cache.get(idList.server).channels.cache.get(ChanId).send({ embeds: [msg]});
     
