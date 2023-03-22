@@ -40,6 +40,8 @@ client.on('messageCreate', async (message) => {
  
 		var mContent = message.content;
 
+
+		//OBJET DE TEST UNIQUEMENT
 		var rpData = {
 			firstname: 'Hope',
 			lastname: 'Starfall',
@@ -49,6 +51,7 @@ client.on('messageCreate', async (message) => {
 			head: "",
 		};
 
+		//OBJET DE TEST UNIQUEMENT
 		var listData = [
 
 			["Aria","Khaly",'238177806729740288'],
@@ -60,6 +63,7 @@ client.on('messageCreate', async (message) => {
 
 		];
 
+		//OBJET DE TEST UNIQUEMENT
 		var listDataStats = [
 
 			["Force","$for",'1d100'],
