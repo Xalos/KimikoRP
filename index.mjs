@@ -12,6 +12,7 @@ const embed = require("./data/mainModules/embedMaker.cjs");
 const utils = require("./data/mainModules/utils.cjs");
 const rpData = require("./data/mainModules/rpDataMaker.cjs");
 const diceRoll = require("./data/mainModules/diceRoll.cjs");
+const nexus = require("./data/mainModules/dataBaseNexus.cjs");
 
 const { PermissionFlagsBits } = require('discord-api-types/v10');
 
@@ -39,10 +40,11 @@ client.on('messageCreate', async (message) => {
 	try{
  
 		var mContent = message.content;
+		var userName = message.author.username;
 
 
 		//OBJET DE TEST UNIQUEMENT
-		var rpData = {
+		var rpDataOLD = {
 			firstname: 'Hope',
 			lastname: 'Starfall',
 			color: 0x0099FF,
@@ -78,46 +80,57 @@ client.on('messageCreate', async (message) => {
 		];
 
 
-			
+		if (sW("!bdtest")) await nexus.test();
 		
-		if (mContent.startsWith("!test"))send.rp(message,await embed.rp(rpData));
+		if (sW("!test"))send.rp(message,await embed.rp(rpData));
 
 
-		if (mContent.startsWith("!des "))send.rp(message,await embed.description(rpData));
+		if (sW("!des "))send.rp(message,await embed.description(rpData));
 
-		if (mContent.startsWith("!desmj "))send.rp(message,await embed.description(rpData,"mj"));
+		if (sW("!desmj "))send.rp(message,await embed.description(rpData,"mj"));
 
-
-		if (mContent.startsWith("!roll "))send.rp(message,await embed.roll(await diceRoll.classicRoll(message),message.author.username));
-
-
-		if (mContent.startsWith("!statslist"))send.rp(message,await embed.statsList(listDataStats));
+		if (sW("!rp ")||sW("r "))send.rp(message,await embed.rp(await nexus.character(message,mContent)));
 
 
-		if (mContent.startsWith("!see "))send.rp(message,await embed.see(rpData,"Joueur"));
+		if (sW("!r "))send.rp(message,await embed.roll(await diceRoll.classicRoll(message),userName));
 
 
-		if (mContent.startsWith("!playerlist"))send.rp(message,await embed.playerlist(listData,"Joueur",message,true));
-
-		if (mContent.startsWith("!mylist"))send.rp(message,await embed.playerlist(listData,"Joueur",message,false));
+		if (sW("!statslist"))send.rp(message,await embed.statsList(listDataStats));
 
 
-		if (mContent.startsWith("!ticket "))send.ticket(await embed.ticket(message,false));
+		if (sW("!see "))send.rp(message,await embed.see(rpData,"Joueur"));
+
+
+		if (sW("!playerlist"))send.rp(message,await embed.playerlist(listData,"Joueur",message,true));
+
+		if (sW("!mylist"))send.rp(message,await embed.playerlist(listData,"Joueur",message,false));
+
+
+		if (sW("!ticket "))send.ticket(await embed.ticket(message,false));
 		
-		if (mContent.startsWith("!ask "))send.askTicket(await embed.ticket((message,"!ask "),true));
+		if (sW("!ask "))send.askTicket(await embed.ticket((message,"!ask "),true));
 		
        
-    
+		function sW(command){
+			return mContent.toUpperCase().startsWith(command.toUpperCase());
+		}
+
 	}catch (error) { 
 
 		try {
+
+			//Catch if custom error
 			if(error[0] == "ErrorReply"){
 				console.error(error[1]);
 				await send.error(error[2],error[1]);
 			}
+
+			//Display not custom error
 			else console.error(error);
 		}
 		catch (error){
+
+			//Final error failsafe
 			console.error(error)
 		}
 	};
