@@ -65,7 +65,7 @@ module.exports = {
                     firstname: data.first_name,
                     lastname: data.last_name,
                     message: rpData[1],
-                    color: Number(dataPict.color),
+                    color: dataPict.color.toString(16),
                     body: dataPict.body,
                     head: dataPict.head,
                 };
@@ -137,7 +137,7 @@ module.exports = {
                     firstname: data.first_name,
                     lastname: data.last_name,
                     message: mContent,
-                    color: Number(dataPict.color),
+                    color: dataPict.color.toString(16),
                     body: dataPict.body,
                     head: dataPict.head,
                     hide: data.hide
@@ -240,7 +240,7 @@ module.exports = {
                             firstname: data.first_name,
                             lastname: data.last_name,
                             message: mContent,
-                            color: Number(dataPict.color),
+                            color: dataPict.color.toString(16),
                             body: dataPict.body,
                             head: dataPict.head,
                             hide: data.hide
@@ -316,7 +316,7 @@ module.exports = {
         //console.log(message);
 
         //console.log(message.guildId);
-
+        
         let id_server = message.guildId;
         let id_player = author;
         let id_chan = message.channelId;
@@ -324,7 +324,7 @@ module.exports = {
         
         var queryArray = [id_server,id_player,id_chan,rpData.firstname,rpData.lastname,id_msg,rpData.head,rpData.body,rpData.color,rpData.hide,id_chan,rpData.firstname,rpData.lastname,id_msg,rpData.head,rpData.body,rpData.color,rpData.hide];
 
-        //console.log(queryArray);
+        console.log(queryArray);
 
 
     try {   
@@ -393,8 +393,6 @@ module.exports = {
 
                     let embed = await messageToDelEdit.embeds[0];
 
-                    console.log(embed);
-
                     var rpData = {
                         author: embed.author.name,
                         message: message.content.replace("!edit ",""),
@@ -430,4 +428,242 @@ module.exports = {
 
 
     },
+
+    channelf: async function (message,type) {
+
+        let serverId = message.guildId;
+        let chanId = message.channelId;
+
+        try {
+
+            conn = await pool.getConnection();
+
+            switch (type) {
+            
+                case 'add':
+                    await conn.query("INSERT INTO ChannelBan (id_server,id_channel) VALUES (?,?) ON DUPLICATE KEY UPDATE id_server = (?), id_channel = (?)",[serverId,chanId,serverId,chanId]);
+                    return "Ce channel est désormais interdit au message rp";
+                break;
+
+                case 'del':
+                    await conn.query("DELETE FROM ChannelBan WHERE id_server = ? AND id_channel = ?",[serverId,chanId,serverId,chanId]);
+                    return "Ce channel n'est plus interdit au rp";
+                break;
+
+                case 'check':
+                    var check = await conn.query("SELECT * FROM ChannelBan WHERE id_server = ? AND id_channel = ?",[serverId,chanId,serverId,chanId]);
+                    return check;
+                break;
+
+            }
+
+        } finally {
+            if (conn) conn.release(); //release to pool
+        }
+
+    },
+
+    addCharacter: async function (message,mContent,type) {
+
+        var serverId = message.guildId;
+        //console.log(message.guild);
+        var serverName = message.guild.name;
+        var rpData = await (await utils.cClear(mContent,/!addplayer |!addnpc /i)).split(' ');
+
+        let regex = /<(?::\w+:|@!*&*|#)[0-9]+>/i
+
+
+        if(rpData[0] == undefined || rpData[1] == undefined)throw ["ErrorReply","Vous n'avez pas spécifié de nom ou prénom",message];
+
+        if(regex.test(rpData[0]) || regex.test(rpData[1]))throw ["ErrorReply","Les données fournis sont invalide",message];
+
+        
+
+        if (type == "Joueur"){
+
+        let userMention = message.mentions.members.first()
+        let playerId = userMention.id;
+
+        if(!userMention)throw ["ErrorReply","Vous n'avez pas mentionné de Joueur",message];
+
+        if(rpData[2] == undefined )throw ["ErrorReply","Vous n'avez pas spécifé de nom ou prénom",message];
+        
+        if(!regex.test(rpData[2]))throw ["ErrorReply","Les données fournis sont invalide",message];
+
+        }
+
+        console.log(rpData);
+
+        let conn;
+        
+        try {
+
+            conn = await pool.getConnection();
+
+            if(type == "Joueur"){
+               
+                var result = await conn.query("SELECT * FROM `Character` WHERE id_server = ? AND id_player = ? AND first_name = ? AND last_name = ?",[serverId,playerId,rpData[0],rpData[1]]);
+                if(result.length !== 0)throw ["ErrorReply","Ce personnage est déjà existant : **"+rpData[0]+" "+rpData[1]+"**",message];
+                else{
+                    await conn.query("INSERT INTO `Character` (id_server,id_player,first_name,last_name) VALUES (?,?,?,?)",[serverId,playerId,rpData[0],rpData[1]]);
+                    return [playerId,"Nouveau personnage créé : **"+rpData[0]+" "+rpData[1]+"**","Votre personnage __**"+rpData[0]+" "+rpData[1]+"**__ à été créé sur le serveur __**"+serverName+"**__. \nSi votre personnage a été créé pour du rp écrit, vous pouvez désormais envoyer les images et assigner la couleur de la bande (couleur principale ou des cheveux).\n\nFaites __**!khelp**__ sur le serveur pour avoir plus d'infos sur les commandes.\n\n(L'assignation de couleur et d'images n'est en aucun cas obligatoires)"];
+                }
+            }
+
+            else if(type == "NPC"){
+              
+                var result = await conn.query("SELECT * FROM NPC WHERE id_server = ? AND first_name = ? AND last_name = ?",[serverId,rpData[0],rpData[1]]);
+                if(result.length !== 0)throw ["ErrorReply","Ce NPC est déjà existant : **"+rpData[0]+" "+rpData[1]+"**",message];
+                else{
+                    await conn.query("INSERT INTO NPC (id_server,first_name,last_name) VALUES (?,?,?)",[serverId,rpData[0],rpData[1]]);
+                    return "Nouveau NPC créé : **"+rpData[0]+" "+rpData[1]+"**";
+                }
+            }
+
+        } finally {
+        if (conn) conn.release(); //release to pool
+    }
+    
+    },
+
+    setColor: async function (message,mContent,type) {
+
+        let version = 0;
+        var serverId = message.guildId;
+        var playerId = message.author.id;
+        var rpData = await (await utils.cClear(mContent,/!color |!colornpc /i)).split(' ');
+
+        let conn;
+
+        let regex = /([a-fA-F0-9]{6})$/i
+
+        if(!regex.test(rpData[0]))throw ["ErrorReply","Vous n'avez pas spécifié de couleur valide",message];
+
+        if(rpData[1] == undefined || rpData[2] == undefined)throw ["ErrorReply","Vous n'avez pas spécifié de nom ou prénom",message];
+
+        let color = await regex.exec(rpData[0])[0];
+        
+        try {
+
+            conn = await pool.getConnection();
+
+            switch(type){
+                case"Joueur":
+
+                    let colorArrayJoueur = ['$['+version+'].color',color,serverId,playerId,rpData[1],rpData[2]];
+
+                    var result = await conn.query("UPDATE `Character` SET version_data = JSON_SET(version_data, ?, ?) WHERE id_server = ? AND id_player = ? AND first_name = ? AND last_name = ?",colorArrayJoueur);
+
+                    if(result.affectedRows == 0)throw ["ErrorReply","Impossible de trouver __votre__ personnage : **"+rpData[1]+" "+rpData[2]+"**",message];
+
+                    return "La couleur de **"+rpData[1]+" "+rpData[2]+"** a été changée avec succès";
+
+                break;
+                case"NPC":
+
+                    let colorArrayNpc = ['$['+version+'].color',color,serverId,rpData[1],rpData[2]];
+
+                    var result = await conn.query("UPDATE NPC SET version_data = JSON_SET(version_data, ?, ?) WHERE id_server = ? AND first_name = ? AND last_name = ?",colorArrayNpc);
+
+                    //console.log(result);
+
+                    if(result.affectedRows == 0)throw ["ErrorReply","Impossible de trouver le NPC : **"+rpData[1]+" "+rpData[2]+"**",message];
+
+                    return "La couleur de **"+rpData[1]+" "+rpData[2]+"** a été changée avec succès";
+
+                break;
+
+            }
+            
+
+        } finally {
+            if (conn) conn.release(); //release to pool
+        }
+
+
+
+
+    
+    },
+
+    delCharacter: async function (message,mContent,type) {
+
+        var serverId = message.guildId;
+        var rpData = await (await utils.cClear(mContent,/!delplayer |!delnpc /i)).split(' ');
+
+        let regex = /<(?::\w+:|@!*&*|#)[0-9]+>/i
+
+
+        if(rpData[0] == undefined || rpData[1] == undefined)throw ["ErrorReply","Vous n'avez pas spécifié de nom ou prénom",message];
+
+        if(regex.test(rpData[0]) || regex.test(rpData[1]))throw ["ErrorReply","Les données fournis sont invalide",message];
+
+        console.log(rpData);
+
+        let conn;
+        
+        try {
+
+            conn = await pool.getConnection();
+
+            if(type == "Joueur"){
+               
+                var result = await conn.query("DELETE FROM `Character` WHERE id_server = ? AND first_name = ? AND last_name = ?",[serverId,rpData[0],rpData[1]]);
+                if(result.affectedRows == 0)throw ["ErrorReply","Impossible de trouver le personnage : **"+rpData[0]+" "+rpData[1]+"**",message];
+                return "Le personnage : **"+rpData[0]+" "+rpData[1]+"** a été supprimé";
+               
+            }
+
+            else if(type == "NPC"){
+              
+                var result = await conn.query("DELETE FROM NPC WHERE id_server = ? AND first_name = ? AND last_name = ?",[serverId,rpData[0],rpData[1]]);
+                if(result.affectedRows == 0)throw ["ErrorReply","Impossible de trouver le NPC : **"+rpData[0]+" "+rpData[1]+"**",message];
+                return "Le NPC : **"+rpData[0]+" "+rpData[1]+"** a été supprimé";
+            }
+
+        } finally {
+        if (conn) conn.release(); //release to pool
+    }
+    
+    },
+
+    upload: async function (message) {
+
+        let conn;
+        
+        try {
+
+            conn = await pool.getConnection();
+
+
+            var result = await conn.query("SELECT * FROM NPC WHERE id_server = ? AND first_name = ? AND last_name = ?",[serverId,rpData[0],rpData[1]]);
+
+
+
+        } finally {
+            if (conn) conn.release(); //release to pool
+        }
+    
+    },
+
+    test: async function () {
+
+        let conn;
+        
+        try {
+
+            conn = await pool.getConnection();
+
+
+            var result = await conn.query("SELECT * FROM NPC WHERE id_server = ? AND first_name = ? AND last_name = ?",[serverId,rpData[0],rpData[1]]);
+
+
+
+        } finally {
+            if (conn) conn.release(); //release to pool
+        }
+    
+    },
+
+
   }
