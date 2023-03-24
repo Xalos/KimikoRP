@@ -23,6 +23,8 @@ module.exports = {
     //Fonction principale générant les Embed des messages RP
     rp: async function (rpData) {
 
+       
+
         if (rpData == "unlock")return "unlock";
 
         const embedResult = await new this.EmbedBuilder()
@@ -38,6 +40,25 @@ module.exports = {
             if(rpData.body != null && rpData.body != "")embedResult.setThumbnail(rpData.body)
             if(rpData.color)embedResult.setColor(rpData.color);
 
+         return [rpData,embedResult];
+    },
+
+    edit: async function (rpData) {
+
+        const embedResult = await new this.EmbedBuilder()
+
+            //Ajoute la couleur lié au personnage et le message souhaité
+            embedResult.setDescription(rpData.message);
+            
+            //Vérification de la précense d'une image de pp sinon retire l'icone
+            
+            if(rpData.head != "")embedResult.setAuthor({ name:  rpData.author, iconURL: rpData.head});
+            else embedResult.setAuthor({ name: rpData.author});
+          
+            //Vérification de la précense d'une image de corp sinon retire la thumbnail
+            if(rpData.body != "")embedResult.setThumbnail(rpData.body)
+            if(rpData.color != null && rpData.color != "")embedResult.setColor(rpData.color);
+
          return embedResult;
     },
  
@@ -48,6 +69,7 @@ module.exports = {
 
         const embedResult = await new this.EmbedBuilder()
 
+           
             
             //Ajoute le message souhaité ainsi que la couleur par défaut
             .setColor(hexSet.grey)
@@ -57,7 +79,20 @@ module.exports = {
             if(type == "mj")embedResult.setAuthor({ name:  "Description du Mj"})
             else embedResult.setAuthor({ name: "Description"})
 
-         return embedResult;
+            
+            //This is not the best away to do this but it will work for now
+            let rpData = {
+                type: "description",
+                firstname: null,
+                lastname: null,
+                message: null,
+                color: Number(hexSet.grey),
+                body: null,
+                head: null,
+                hide: null
+            };
+
+         return [rpData,embedResult];
     },
 
     //Génère les Embed des messages de description MJ et Joueurs

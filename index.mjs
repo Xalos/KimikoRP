@@ -22,6 +22,7 @@ const prefix = "!";
 	
 	embed.Clear = rpData.cClear = utils.cClear;	
 	send.client = client;
+	nexus.client = client;
 	embed.EmbedBuilder = EmbedBuilder;
 	embed.PermissionFlagsBits = PermissionFlagsBits;
 
@@ -62,7 +63,7 @@ client.on('messageCreate', async (message) => {
 
 		if (sW("!bdtest")) await nexus.test();
 		
-		if (sW("!test"))send.rp(message,await embed.rp(rpData));
+		if (sW("!test"))send.embed(message,await embed.rp(rpData));
 
 
 		if (sW("!des "))send.rp(message,await embed.description(mContent));
@@ -83,23 +84,27 @@ client.on('messageCreate', async (message) => {
 
 		if (sW("!main "))send.notif(message,await nexus.lockSystem(message,mContent,"main"));
 
+		if (sW("!del"))send.notif(message,await nexus.delEdit(message,"delete"));
 
-		if (sW("!main "))nexus.lockSystem(message,mContent,"main");
+		if (sW("!edit "))send.notif(message,await nexus.delEdit(message,"edit"));
+
+
+		
 
 		//MJ LOCK
-		if (sW("!statslist"))send.rp(message,await embed.statsList(listDataStats));
+		if (sW("!statslist"))send.embed(message,await embed.statsList(listDataStats));
 
 
-		if (sW("!see "))send.rp(message,await embed.see(await nexus.see(message,mContent,"Joueur"),"Joueur"));
+		if (sW("!see "))send.embed(message,await embed.see(await nexus.see(message,mContent,"Joueur"),"Joueur"));
 
-		if (sW("!seenpc "))send.rp(message,await embed.see(await nexus.see(message,mContent,"npc"),"NPC"));
+		if (sW("!seenpc "))send.embed(message,await embed.see(await nexus.see(message,mContent,"npc"),"NPC"));
 
 
-		if (sW("!playerlist"))send.rp(message,await embed.playerlist(await nexus.listChar(message,"Joueur"),"Joueur",message,true));
+		if (sW("!playerlist"))send.embed(message,await embed.playerlist(await nexus.listChar(message,"Joueur"),"Joueur",message,true));
 
-		if (sW("!npclist"))send.rp(message,await embed.playerlist(await nexus.listChar(message,"npc"),"NPC",message,true));
+		if (sW("!npclist"))send.embed(message,await embed.playerlist(await nexus.listChar(message,"npc"),"NPC",message,true));
 
-		if (sW("!mylist"))send.rp(message,await embed.playerlist(await nexus.listChar(message,"Joueur"),"Joueur",message,false));
+		if (sW("!mylist"))send.embed(message,await embed.playerlist(await nexus.listChar(message,"Joueur"),"Joueur",message,false));
 
 
 		if (sW("!ticket "))send.ticket(await embed.ticket(message,false));

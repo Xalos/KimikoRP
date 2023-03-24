@@ -2,9 +2,10 @@
 // ========
 
 const utils = require("./utils.cjs");
+const { discord } = require('discord.js');
+const embedMaker = require("./embedMaker.cjs");
 
 const npcBluePurple = 0x4D4DFF;
-
 
 const { host, user, password, database, port } = require('./../../config.json');
 
@@ -86,7 +87,7 @@ module.exports = {
         var serverId = message.guildId;
         var playerId = message.author.id;
         var rpData = await (await utils.cClear(mContent,/!rp |!npc |r |n /i)).split(' ');
-        var mContent = await utils.cClear((await utils.cClear(mContent,/!rp |!npc |r |n /i)));
+        var mContent = await utils.cClear((await utils.cClear(mContent,/!rp |!npc |r |n /i)),rpData[0]);
 
        
         if(!rpData[1])throw ["ErrorReply","Votre message ne contient aucun text",message];
@@ -139,9 +140,12 @@ module.exports = {
                     color: Number(dataPict.color),
                     body: dataPict.body,
                     head: dataPict.head,
+                    hide: data.hide
                 };
             }     
            
+          
+
             return rpData;
             
            
@@ -208,6 +212,7 @@ module.exports = {
 
     lockMessage: async function (message,mContent) {
         
+        
         var serverId = message.guildId;
         var playerId = message.author.id;
 
@@ -238,8 +243,11 @@ module.exports = {
                             color: Number(dataPict.color),
                             body: dataPict.body,
                             head: dataPict.head,
+                            hide: data.hide
                         };
 
+                       
+                        
                         return rpData;
 
                     }
@@ -297,5 +305,129 @@ module.exports = {
             if (conn) conn.release(); //release to pool
             }
 
+   }, 
+    
+   logRp: async function (rpData,message,author) {
+
+        //console.log("We are in !!!");
+
+        //console.log(rpData);
+
+        //console.log(message);
+
+        //console.log(message.guildId);
+
+        let id_server = message.guildId;
+        let id_player = author;
+        let id_chan = message.channelId;
+        let id_msg = message.id;
+        
+        var queryArray = [id_server,id_player,id_chan,rpData.firstname,rpData.lastname,id_msg,rpData.head,rpData.body,rpData.color,rpData.hide,id_chan,rpData.firstname,rpData.lastname,id_msg,rpData.head,rpData.body,rpData.color,rpData.hide];
+
+        //console.log(queryArray);
+
+
+    try {   
+
+        //console.log("PreDB");
+        
+        conn = await pool.getConnection();
+
+        await conn.query("INSERT INTO LastMSG (id_server,id_player,id_chan,first_name,last_name,id_msg,head,body,color,hide) VALUES (?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE id_chan = (?), first_name = (?), last_name = (?), id_msg = (?),head = (?), body = (?), color = (?), hide = (?)",queryArray);
+        
+        //console.log("PostDB");
+
+    } finally {
+        if (conn) conn.release(); //release to pool
+        }
+
+
    },
+   
+    delEdit: async function (message,type) {
+        
+        var serverId = message.guildId;
+        var playerId = message.author.id;
+
+        //console.log(serverId);
+        //console.log(playerId);
+        
+        try {
+        
+            conn = await pool.getConnection();
+ 
+            var resultLastMSG = await conn.query("SELECT * FROM LastMSG WHERE id_server = ? AND id_player = ?",[serverId,playerId]);
+
+            if(resultLastMSG.length === 0 || !resultLastMSG)throw ["ErrorReply","Vous ne possedez pas d'ancien message RP sur ce serveur",message];
+                
+                resultLastMSG = resultLastMSG[0];
+
+                const channel = await this.client.channels.cache.get(resultLastMSG.id_chan);
+                    //console.log(resultLastMSG.id_chan);
+                
+                try {
+                    var messageToDelEdit = await channel.messages.fetch(resultLastMSG.id_msg);
+                }
+                catch {
+                    await conn.query("DELETE FROM LastMSG WHERE id_server = ? AND id_player = ?",[serverId,playerId]);
+                    throw ["ErrorReply","Votre précédent message a été supprimé ou est innacessible. Votre historique va être purgé",message];
+                }
+
+                if(!messageToDelEdit){
+                    //This never should trigger but it can happen so... 
+                    await conn.query("DELETE FROM LastMSG WHERE id_server = ? AND id_player = ?",[serverId,playerId]);
+                    throw ["ErrorReply","Votre précédent message a été supprimé ou est innacessible. Votre historique va être purgé",message];
+                }
+
+
+                if(type == "delete"){
+
+                    await messageToDelEdit.delete();
+
+                    await conn.query("DELETE FROM LastMSG WHERE id_server = ? AND id_player = ?",[serverId,playerId]);
+
+                    return "Message RP supprimer";
+                
+                }
+                else if(type == "edit"){
+
+                    let embed = await messageToDelEdit.embeds[0];
+
+                    console.log(embed);
+
+                    var rpData = {
+                        author: embed.author.name,
+                        message: message.content.replace("!edit ",""),
+                        color: embed.color,
+                        body: "",
+                        head: ""
+                    };
+
+
+                   if(embed.thumbnail)rpData.body = embed.thumbnail.url;
+                   if(embed.author.iconURL)rpData.head = embed.author.iconURL;
+
+                   console.log("Data : "+rpData.body);
+                   console.log(embed.author);
+                   console.log("Data : "+rpData.head);
+
+
+                    let editEmbed = await embedMaker.edit(await rpData);
+                    
+
+                    await messageToDelEdit.edit({ embeds: [editEmbed] });
+
+                    return "Message RP édité";
+                }
+            
+           
+ 
+         } finally {
+             if (conn) conn.release(); //release to pool
+             }
+
+
+
+
+    },
   }

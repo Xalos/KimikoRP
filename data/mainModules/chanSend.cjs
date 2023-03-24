@@ -1,6 +1,8 @@
 // chanSend.js
 // ========
 
+const nexus = require("./dataBaseNexus.cjs");
+
 const idList = {
 
     server : "539713857308852224",
@@ -45,8 +47,16 @@ module.exports = {
     askTicket: function (ticketData) {
         sendMsgToChan(this.client,idList.askTicket,ticketData[1]);	
     },
-    rp: function (message,msg) {
+    rp: async function (message,msg) {
+     
         if (msg == "unlock")return "unlock";
+        message.delete();
+        await message.channel.send({ embeds: [msg[1]]})
+        .then(msgSend => { nexus.logRp(msg[0],msgSend,message.author.id);
+
+        });
+    },
+    embed: function (message,msg) {
         message.delete();
         message.channel.send({ embeds: [msg]});
     },
