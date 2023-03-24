@@ -10,7 +10,7 @@ module.exports = {
     
     classicRoll: async function (message) {
 
-        var rollMsg = await utils.cClear(message.content,/!roll |!r /); 
+        var rollMsg = await utils.cClear(message.content,/!roll |!r /i); 
        
         if(dice.validate(rollMsg)){
         var rollData = dice.roll(rollMsg);

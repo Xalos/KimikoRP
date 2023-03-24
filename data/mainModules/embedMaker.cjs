@@ -22,6 +22,9 @@ module.exports = {
     
     //Fonction principale générant les Embed des messages RP
     rp: async function (rpData) {
+
+        if (rpData == "unlock")return "unlock";
+
         const embedResult = await new this.EmbedBuilder()
 
             //Ajoute la couleur lié au personnage et le message souhaité
@@ -39,16 +42,16 @@ module.exports = {
     },
  
     //Génère les Embed des messages de description MJ et Joueurs
-    description: async function (rpData,type) {
+    description: async function (mContent,type) {
 
-        rpData.message = await utils.cClear(rpData.message,/!desmj |!des /); 
+        let message = await utils.cClear(mContent,/!desmj |!des /i); 
 
         const embedResult = await new this.EmbedBuilder()
 
             
             //Ajoute le message souhaité ainsi que la couleur par défaut
             .setColor(hexSet.grey)
-            .setDescription(rpData.message);
+            .setDescription(message);
             
             //Vérification de la précense d'une image de pp sinon retire l'icone
             if(type == "mj")embedResult.setAuthor({ name:  "Description du Mj"})
@@ -93,7 +96,7 @@ module.exports = {
 
             //Affiche l'image, le nom et la couleur du personnage
             .setColor(hexSet.jade)
-            .setDescription(listText);
+            if(listText)embedResult.setDescription(listText);
 		   
 		    if (!global)embedResult.setTitle("Liste des personnages de "+userName+" **["+listSize+"]**");
             else embedResult.setTitle("Liste des "+type+" **["+listSize+"]**");
@@ -120,8 +123,8 @@ module.exports = {
 
             //Affiche l'image, le nom et la couleur du personnage
             .setColor(hexSet.kingGold)
-            .setDescription(listText)
 		    .setTitle("Liste des Caractéristiques **["+listSize+"]**");
+            if(listText)embedResult.setDescription(listText)
           
 
          return embedResult;
@@ -148,7 +151,7 @@ module.exports = {
     ticket: async function (message,ask) {
 
         //Apee
-        ticketMsg = await utils.cClear(message.content,/!ticket |!ask /); 
+        ticketMsg = await utils.cClear(message.content,/!ticket |!ask /i); 
 
 	    var tag = message.author.tag;
 

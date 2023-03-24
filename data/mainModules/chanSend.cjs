@@ -46,14 +46,26 @@ module.exports = {
         sendMsgToChan(this.client,idList.askTicket,ticketData[1]);	
     },
     rp: function (message,msg) {
-    
+        if (msg == "unlock")return "unlock";
         message.delete();
         message.channel.send({ embeds: [msg]});
     },
+    reply: function (message,msg) {
+        message.delete();
+        message.channel.send(msg);
+    },
+    notif: function (message,msg) {
+        message.delete();
+        message.channel.send(msg).then(msg => {setTimeout(() => msg.delete(), 10000)}).catch(console.error);
+     },
     error: function (message,msg) {
         message.delete();
         message.channel.send(message.member.user.toString()+" "+msg).then(msg => {setTimeout(() => msg.delete(), 10000)}).catch(console.error);
+     },
+    errorMP: function (message,msg) {
+        message.author.send("__Une Erreur est survenue, voici une copie de votre commande :__\n"+message.content).catch(console.error);
      }
+     
   };
  
   async function sendMsgToChan(client,ChanId,msg){
