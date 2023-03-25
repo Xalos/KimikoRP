@@ -29,8 +29,8 @@ module.exports = {
     log: function (msg) {
         sendMsgToChan(this.client,idList.log,msg);
     },
-    image: function (msg) {
-        sendMsgToChan(this.client,idList.image,msg);
+    image: function (imageData) {
+        sendImageToChan(this.client,idList.image,image);
     },
     addServ: function (msg) {
         sendMsgToChan(this.client,idList.addServ,msg);	
@@ -48,13 +48,16 @@ module.exports = {
         sendMsgToChan(this.client,idList.askTicket,ticketData[1]);	
     },
     rp: async function (message,msg) {
-     
+        
+        //Si pas lock break
         if (msg == "unlock")return "unlock";
-        message.delete();
-        await message.channel.send({ embeds: [msg[1]]})
-        .then(msgSend => { nexus.logRp(msg[0],msgSend,message.author.id);
-
-        });
+        
+        //Si channel ban break
+        if((await nexus.channelf(message,"check")).length != 0)return "unlock";;
+            message.delete();
+            await message.channel.send({ embeds: [msg[1]]})
+                .then(msgSend => { nexus.logRp(msg[0],msgSend,message.author.id)});
+        
     },
     embed: function (message,msg) {
         message.delete();
@@ -67,6 +70,17 @@ module.exports = {
     notif: function (message,msg) {
         message.delete();
         message.channel.send(msg).then(msg => {setTimeout(() => msg.delete(), 10000)}).catch(console.error);
+     },
+     notifNoDel: function (message,msg) {
+        message.channel.send(msg);
+     },
+    notifChanMp: function (message,msg) {
+        message.delete();
+        message.channel.send(msg[1]);
+        this.client.users.fetch(msg[0], false).then((user) => {
+            user.send(msg[2]);
+        });
+
      },
     error: function (message,msg) {
         message.delete();
@@ -82,9 +96,22 @@ module.exports = {
     try {  
 
         if (typeof msg === 'string')await client.guilds.cache.get(idList.server).channels.cache.get(ChanId).send(msg);
+        else if (typeof msg === 'string')d;
         else await client.guilds.cache.get(idList.server).channels.cache.get(ChanId).send({ embeds: [msg]});
     
     } catch (error) {console.error(error);};    
 	
 
   }
+
+  async function sendImageToChan(client,ChanId,imageData){
+    try {  
+
+        await client.guilds.cache.get(idList.server).channels.cache.get(ChanId).send({ files: imageData});
+   
+    
+    } catch (error) {console.error(error);};    
+	
+
+  }
+  

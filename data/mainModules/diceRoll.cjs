@@ -24,6 +24,11 @@ module.exports = {
         
         //if(dice.validate())
         
+    },
+    diceTest: async function (message) {
+
+        return dice.validate(message);
+        
     }
 
 }

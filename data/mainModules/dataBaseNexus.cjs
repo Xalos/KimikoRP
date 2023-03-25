@@ -1,9 +1,12 @@
 // dataBaseNexus
 // ========
 
+const {discord} = require('discord.js');
+const Jimp = require("jimp");
+
 const utils = require("./utils.cjs");
-const { discord } = require('discord.js');
 const embedMaker = require("./embedMaker.cjs");
+const diceRoll = require("./diceRoll.cjs");
 
 const npcBluePurple = 0x4D4DFF;
 
@@ -12,6 +15,7 @@ const { host, user, password, database, port } = require('./../../config.json');
 const mariadb = require('mariadb');
 const pool = mariadb.createPool({host: host,port: port,user: user,password: password,database: database, connectionLimit: 10});
 
+const maxImageSize = 663;
 
 
 
@@ -535,7 +539,7 @@ module.exports = {
 
         let conn;
 
-        let regex = /([a-fA-F0-9]{6})$/i
+        let regex = /([a-fA-F0-9]{6})$/i;
 
         if(!regex.test(rpData[0]))throw ["ErrorReply","Vous n'avez pas spécifié de couleur valide",message];
 
@@ -627,7 +631,237 @@ module.exports = {
     
     },
 
-    upload: async function (message) {
+    upload: async function (message,mContent,type) {
+
+        let version = 0;
+        var serverId = message.guildId;
+        var playerId = message.author.id;
+
+        let regex = /body|head/i;
+        
+        var uploadData = await (await utils.cClear(mContent,/!upload |!uploadnpc /i)).split(' ');
+
+        console.log(message.attachments);
+
+        var attachment = message.attachments.first();
+        var url = attachment ? attachment.url : null;
+
+        if(!url)throw ["ErrorReply","Vous n'avez pas envoyer d'images dans votre upload",message];
+
+        if(!regex.test(uploadData[0]))throw ["ErrorReply","Vous n'avez pas spécifié de valeur valide pour le choix de l'images",message];
+
+        if(uploadData[1] == undefined || uploadData[2] == undefined)throw ["ErrorReply","Vous n'avez pas spécifié de nom ou prénom",message];
+
+        if(regex.test(uploadData[1]) || regex.test(uploadData[2]))throw ["ErrorReply","Vous n'avez pas spécifié de nom ou prénom",message];
+        
+        let conn;
+        
+        try {
+
+            conn = await pool.getConnection();
+            var bodyHead = uploadData[0].toLowerCase()
+
+           
+                    switch(type){
+
+                    case "Joueur":
+
+                    var result = await conn.query("SELECT * FROM `Character` WHERE id_server = ? AND id_player = ? AND first_name = ? AND last_name = ?",[serverId,playerId,uploadData[1],uploadData[2]]);
+
+                    if(result.length === 0 || !result)throw ["ErrorReplyMP","Impossible de trouver __votre__ personnage : **"+uploadData[1]+" "+uploadData[2]+"**",message];
+
+                    let imageEdit = await Jimp.read(url);
+
+                    imageEdit.resize(Jimp.AUTO, maxImageSize);
+
+                    let imageBuffer = await imageEdit.getBufferAsync(Jimp.MIME_PNG);
+                    
+
+                      try {  
+                        
+                        await this.client.guilds.cache.get("539713857308852224").channels.cache.get("539713961784770570").send({ files: [{ attachment: imageBuffer }]}).then(async msgupload => {
+
+	                        var attachment = msgupload.attachments.first();
+                            var url = attachment ? attachment.url : null;
+
+                            let imageArrayJoueur = ['$['+version+'].'+bodyHead,url,serverId,playerId,uploadData[1],uploadData[2]];
+
+                            await conn.query("UPDATE `Character` SET version_data = JSON_SET(version_data, ?, ?) WHERE id_server = ? AND id_player = ? AND first_name = ? AND last_name = ?",imageArrayJoueur);
+
+                        });
+
+                        return "L'image de "+bodyHead+" de **"+uploadData[1]+" "+uploadData[2]+"** a été changée avec succès";
+                   
+                    } catch (error) {console.error(error);};    
+        
+                        break;
+                        case "NPC":
+                        
+                        var result = await conn.query("SELECT * FROM NPC WHERE id_server = ? AND first_name = ? AND last_name = ?",[serverId,uploadData[1],uploadData[2]]);
+
+                        if(result.length === 0 || !result)throw ["ErrorReplyMP","Impossible de trouver le NPC : **"+uploadData[1]+" "+uploadData[2]+"**",message];
+
+                        let imageEditNPC = await Jimp.read(url);
+
+                        imageEditNPC.resize(Jimp.AUTO, maxImageSize);
+
+                        let imageBufferNPC = await imageEditNPC.getBufferAsync(Jimp.MIME_PNG);
+                    
+
+                        try {  
+                        
+                            await this.client.guilds.cache.get("539713857308852224").channels.cache.get("539713961784770570").send({ files: [{ attachment: imageBufferNPC }]}).then(async msgupload => {
+
+	                        var attachment = msgupload.attachments.first();
+                            var url = attachment ? attachment.url : null;
+
+                            let imageArrayNPC = ['$['+version+'].'+bodyHead,url,serverId,uploadData[1],uploadData[2]];
+
+                            await conn.query("UPDATE NPC SET version_data = JSON_SET(version_data, ?, ?) WHERE id_server = ? AND first_name = ? AND last_name = ?",imageArrayNPC);
+
+                        });
+
+                        return "L'image du "+bodyHead+" de NPC **"+uploadData[1]+" "+uploadData[2]+"** a été changée avec succès";
+                   
+                    } catch (error) {console.error(error);};    
+
+
+                }
+
+        } finally {
+            if (conn) conn.release(); //release to pool
+        }
+    
+    },
+
+    carac: async function (message,mContent,type) {
+
+        var serverId = message.guildId;
+
+        let regexOptions = /add|del/i;
+        let regexSymbol = /\+|\-|\*/i;
+        let regexForbidenChar = /\W|_/i;
+        
+        
+        var caracData = await (await utils.cClear(mContent,/!carac /i)).split(' ');
+
+        if(!regexOptions.test(caracData[0]))throw ["ErrorReply","Vous n'avez pas spécifié de valeur valide pour le choix d'ajout ou de supression",message];
+
+        let options = caracData[0].toLowerCase();
+
+        if(caracData[1] == undefined || caracData[2] == undefined || caracData[3] == undefined || caracData[4] == undefined)throw ["ErrorReply","Certaines valeurs requises sont manquantes",message];
+
+        if(regexForbidenChar.test(caracData[1]))throw ["ErrorReplyMP","La commande utilise des caractère interdit",message];
+        
+        if(!diceRoll.diceTest(caracData[3]))throw ["ErrorReplyMP","Vous n'avez pas spécifié de valeur de dé valide",message];
+
+        if(!regexSymbol.test(caracData[4]))throw ["ErrorReplyMP","Vous n'avez pas spécifié de symbol valide",message];
+        
+        let conn;
+        
+        try {
+
+            switch(options) {
+            
+            case "add":
+
+            conn = await pool.getConnection();
+
+            let caracKey = caracData[1].toLowerCase();
+            
+            let caracJson = {
+                [caracKey]: 
+                    {
+                        name: caracData[2],
+                        dice: caracData[3],
+                        type: caracData[4]
+                    }
+            }
+
+            let caracJsonData = {
+                        name: caracData[2],
+                        dice: caracData[3],
+                        type: caracData[4]
+            }
+        
+
+         
+            //caracJson[caracData[1]].name = caracData[2];
+            //caracJson[caracData[1]].dice = caracData[3];
+            //caracJson[caracData[1]].type = caracData[4];
+
+        //let imageArrayJoueur = ['$'+caracData[1]+'.'+bodyHead,url,serverId,playerId,uploadData[1],uploadData[2]];
+
+        let caracArray = [serverId,caracJson];
+        
+        console.log(caracArray);
+        
+        let result = await conn.query("INSERT IGNORE INTO ServerList (id_server,server_stats) VALUES (?,?)",caracArray)
+        
+        if(result.affectedRows == 0){
+            
+            let resultSearch = await conn.query("SELECT server_stats FROM ServerList WHERE id_server = ?",serverId);
+
+            let searchData = JSON.parse(resultSearch[0].server_stats);
+
+            if(searchData.hasOwnProperty(caracKey))throw ["ErrorReply","Une caractéristique utilise déjà cette commande : **"+caracKey+"**",message];
+
+            searchData[caracKey] = caracJsonData;
+
+            caracDataToSend = JSON.stringify(searchData)
+            
+            await conn.query("UPDATE ServerList SET server_stats = ? WHERE id_server = ?",[caracDataToSend,serverId])
+
+            return "La Caractéristique : **"+caracData[2]+"** utilisant la commande __**$"+caracKey+"**__ a été ajouté";
+
+        }
+     
+        break;
+        case "del" :
+
+
+
+
+
+
+
+        break;
+        }
+
+        } finally {
+            if (conn) conn.release(); //release to pool
+        }
+    
+    },
+
+
+
+
+    test: async function () {
+
+        let conn;
+        
+        try {
+
+            conn = await pool.getConnection();
+
+            let imageArrayJoueur = ['$'+version+'.'+bodyHead,url,serverId,playerId,uploadData[1],uploadData[2]];
+
+            
+            await conn.query("INSERT INTO ServerList (id_server,server_stats) VALUES (?,?) ON DUPLICATE KEY UPDATE ServerList SET server_stats = JSON_INSERT(server_stats, ?, ?) WHERE id_server = ?",[serverId,caracInit,idChar,idChar]);
+            //var result = await conn.query("SELECT * FROM NPC WHERE id_server = ? AND first_name = ? AND last_name = ?",[serverId,rpData[0],rpData[1]]);
+            //await conn.query("UPDATE NPC SET version_data = JSON_SET(version_data, ?, ?) WHERE id_server = ? AND first_name = ? AND last_name = ?",imageArrayNPC);
+
+
+        } finally {
+            if (conn) conn.release(); //release to pool
+        }
+    
+    },
+
+
+
+    test: async function () {
 
         let conn;
         
@@ -645,6 +879,7 @@ module.exports = {
         }
     
     },
+
 
     test: async function () {
 

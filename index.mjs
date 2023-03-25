@@ -68,13 +68,11 @@ client.on('messageCreate', async (message) => {
 
 		if (sW("!des "))send.rp(message,await embed.description(mContent));
 
-		//MJ LOCK
-		if (sW("!desmj "))send.rp(message,await embed.description(mContent,"mj"));
+		
 
 		if (sW("!rp ")||sW("r "))send.rp(message,await embed.rp(await nexus.character(message,mContent,"Joueur")));
 
-		//MJ LOCK
-		if (sW("!npc ")||sW("n "))send.rp(message,await embed.rp(await nexus.character(message,mContent,"npc")));
+		
 
 		if (sW("!r "))send.rp(message,await embed.roll(await diceRoll.classicRoll(message),userName));
 
@@ -84,15 +82,41 @@ client.on('messageCreate', async (message) => {
 
 		if (sW("!main "))send.notif(message,await nexus.lockSystem(message,mContent,"main"));
 
-		if (sW("!del"))send.notif(message,await nexus.delEdit(message,"delete"));
+		if (mContent == "!del")send.notif(message,await nexus.delEdit(message,"delete"));
 
 		if (sW("!edit "))send.notif(message,await nexus.delEdit(message,"edit"));
 
+		if (sW("!color "))send.notif(message,await nexus.setColor(message,mContent,"Joueur"));
+
+		if (sW("!upload "))send.notifNoDel(message,await nexus.upload(message,mContent,"Joueur"));
 
 		
 
-		//MJ LOCK
+		
+		//MJ LOCK COMMAND
+		if (sW("!npc ")||sW("n "))send.rp(message,await embed.rp(await nexus.character(message,mContent,"npc")));
+		
+		if (sW("!desmj "))send.rp(message,await embed.description(mContent,"mj"));
+		
 		if (sW("!statslist"))send.embed(message,await embed.statsList(listDataStats));
+
+		if (sW("!channelf add"))send.notif(message,await nexus.channelf(message,"add"));
+	
+		if (sW("!channelf del"))send.notif(message,await nexus.channelf(message,"del"));
+
+		if (sW("!addplayer "))send.notifChanMp(message,await nexus.addCharacter(message,mContent,"Joueur"));
+
+		if (sW("!addnpc "))send.notif(message,await nexus.addCharacter(message,mContent,"NPC"));
+
+		if (sW("!delplayer "))send.notif(message,await nexus.delCharacter(message,mContent,"Joueur"));
+
+		if (sW("!delnpc "))send.notif(message,await nexus.delCharacter(message,mContent,"NPC"));
+
+		if (sW("!uploadnpc "))send.notifNoDel(message,await nexus.upload(message,mContent,"NPC"));
+
+		if (sW("!colornpc "))send.notif(message,await nexus.setColor(message,mContent,"NPC"));
+		
+		if (sW("!carac "))send.notif(message,await nexus.carac(message,mContent));
 
 
 		if (sW("!see "))send.embed(message,await embed.see(await nexus.see(message,mContent,"Joueur"),"Joueur"));
