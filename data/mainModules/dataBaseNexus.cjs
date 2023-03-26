@@ -496,7 +496,6 @@ module.exports = {
 
         }
 
-        console.log(rpData);
 
         let conn;
         
@@ -641,7 +640,7 @@ module.exports = {
         
         var uploadData = await (await utils.cClear(mContent,/!upload |!uploadnpc /i)).split(' ');
 
-        console.log(message.attachments);
+        
 
         var attachment = message.attachments.first();
         var url = attachment ? attachment.url : null;
@@ -748,26 +747,28 @@ module.exports = {
         if(!regexOptions.test(caracData[0]))throw ["ErrorReply","Vous n'avez pas spécifié de valeur valide pour le choix d'ajout ou de supression",message];
 
         let options = caracData[0].toLowerCase();
-
-        if(caracData[1] == undefined || caracData[2] == undefined || caracData[3] == undefined || caracData[4] == undefined)throw ["ErrorReply","Certaines valeurs requises sont manquantes",message];
+    
+        if(caracData[1] == undefined)throw ["ErrorReply","Certaines valeurs requises sont manquantes",message];
 
         if(regexForbidenChar.test(caracData[1]))throw ["ErrorReplyMP","La commande utilise des caractère interdit",message];
         
-        if(!diceRoll.diceTest(caracData[3]))throw ["ErrorReplyMP","Vous n'avez pas spécifié de valeur de dé valide",message];
-
-        if(!regexSymbol.test(caracData[4]))throw ["ErrorReplyMP","Vous n'avez pas spécifié de symbol valide",message];
-        
         let conn;
         
+        var caracKey = caracData[1].toLowerCase();
+
         try {
 
             switch(options) {
             
             case "add":
 
-            conn = await pool.getConnection();
+            if(caracData[2] == undefined || caracData[3] == undefined || caracData[4] == undefined)throw ["ErrorReply","Certaines valeurs requises sont manquantes",message];
+        
+            if(!diceRoll.diceTest(caracData[3]))throw ["ErrorReplyMP","Vous n'avez pas spécifié de valeur de dé valide",message];
 
-            let caracKey = caracData[1].toLowerCase();
+            if(!regexSymbol.test(caracData[4]))throw ["ErrorReplyMP","Vous n'avez pas spécifié de symbol valide",message];
+
+            conn = await pool.getConnection();
             
             let caracJson = {
                 [caracKey]: 
@@ -784,17 +785,7 @@ module.exports = {
                         type: caracData[4]
             }
         
-
-         
-            //caracJson[caracData[1]].name = caracData[2];
-            //caracJson[caracData[1]].dice = caracData[3];
-            //caracJson[caracData[1]].type = caracData[4];
-
-        //let imageArrayJoueur = ['$'+caracData[1]+'.'+bodyHead,url,serverId,playerId,uploadData[1],uploadData[2]];
-
         let caracArray = [serverId,caracJson];
-        
-        console.log(caracArray);
         
         let result = await conn.query("INSERT IGNORE INTO ServerList (id_server,server_stats) VALUES (?,?)",caracArray)
         
@@ -812,18 +803,22 @@ module.exports = {
             
             await conn.query("UPDATE ServerList SET server_stats = ? WHERE id_server = ?",[caracDataToSend,serverId])
 
-            return "La Caractéristique : **"+caracData[2]+"** utilisant la commande __**$"+caracKey+"**__ a été ajouté";
+            return "La caractéristique : **"+caracData[2]+"** utilisant la commande __**$"+caracKey+"**__ a été ajouté";
 
         }
      
         break;
         case "del" :
 
+        conn = await pool.getConnection();
 
+        
+        
+        let delResult = await conn.query("UPDATE ServerList SET server_stats = JSON_REMOVE(server_stats, ?) WHERE id_server = ? ",["$."+caracKey,serverId]);
 
+       
 
-
-
+        return "La caractéristique utilisant la commande __**$"+caracKey+"**__ a été supprimer";
 
         break;
         }
@@ -837,7 +832,68 @@ module.exports = {
 
 
 
-    test: async function () {
+    setcarac: async function (message,mContent) {
+
+        var serverId = message.guildId;
+
+        //let regexOptions = /add|del/i;
+        let regexNumber = /(^[-]?\d*\d+)$/;
+        let regexForbidenChar = /\W|_/i;
+        
+        
+        var caracData = await (await utils.cClear(mContent,/!setcarac /i)).split(' ');
+
+        if(caracData[1] == undefined || caracData[2] == undefined || caracData[3] == undefined)throw ["ErrorReply","Certaines valeurs requises sont manquantes",message];
+
+        if(regexForbidenChar.test(caracData[0]))throw ["ErrorReply","La commande utilise des caractère interdit",message];
+
+        
+        if(!regexNumber.test(caracData[1]))throw ["ErrorReply","La valeur numérique de la caractéristique n'est pas valide",message];
+    
+        let conn;
+
+        var caracKey = caracData[0];
+        var caracNum = caracData[1];
+        var firstname = caracData[2];
+        var lastname = caracData[3];
+        
+        try {
+
+            conn = await pool.getConnection();
+
+
+            let resultSearchServ = await conn.query("SELECT server_stats FROM ServerList WHERE id_server = ?",serverId);
+
+            let searchDataServ = JSON.parse(resultSearchServ[0].server_stats);
+
+          
+            if(!searchDataServ.hasOwnProperty(caracKey))throw ["ErrorReplyMP","Aucunes caractéristiques n'utilise cette commande : **"+caracKey+"**",message];
+
+            let resultSearch = await conn.query("SELECT stats_data FROM `Character` WHERE id_server = ? AND first_name = ? AND last_name = ?",[serverId,firstname,lastname]);
+
+            if(resultSearch === 0 || !resultSearch)throw ["ErrorReplyMP","Impossible de trouver le personnage : **"+uploadData[2]+" "+uploadData[3]+"**",message];
+
+             let searchData = JSON.parse(resultSearch[0].stats_data);
+
+             searchData[caracKey] = caracNum;
+
+             caracDataToSend = JSON.stringify(searchData)
+            
+             await conn.query("UPDATE `Character` SET stats_data = ? WHERE id_server = ? AND first_name = ? AND last_name = ?",[caracDataToSend,serverId,firstname,lastname])
+ 
+             return "La caractéristique __**"+searchDataServ[caracKey].name+"**__ a été ajouté au personnage **"+firstname+" "+lastname+"** avec pour valeur __**"+caracNum+"**__";
+
+        } finally {
+            if (conn) conn.release(); //release to pool
+        }
+    
+    },
+
+
+
+    statsList: async function (message) {
+
+        var serverId = message.guildId;
 
         let conn;
         
@@ -845,34 +901,106 @@ module.exports = {
 
             conn = await pool.getConnection();
 
-            let imageArrayJoueur = ['$'+version+'.'+bodyHead,url,serverId,playerId,uploadData[1],uploadData[2]];
+
+            let result = await conn.query("SELECT server_stats FROM ServerList WHERE id_server = ?",[serverId]);
+
+            let searchData = await JSON.parse(result[0].server_stats);
+
+            let listDataStats = new Array();
+
+            let i = 0
+            
+            for (var key in searchData) {
+
+                listDataStats.push([searchData[key].name, key, searchData[key].dice]);
+                i++;
+            }
+            
+            console.log(listDataStats);
+
+             return listDataStats;
+
+        } finally {
+            if (conn) conn.release(); //release to pool
+        }
+    
+    },
+
+    statsListChar: async function (message) {
+
+        var serverId = message.guildId;
+
+        var authorId = message.author.id;
+
+        let conn;
+        
+        try {
+
+            conn = await pool.getConnection();
+
+            let resultMain = await conn.query("SELECT id_main FROM MainLock WHERE id_player = ? AND id_server",[authorId,serverId]);
+
+            let idCharacter = await JSON.parse(resultMain[0].id_main);
+
+            let result = await conn.query("SELECT stats_data FROM `Character` WHERE id_charac = ?",[idCharacter]);
+
+            let searchData = await JSON.parse(result[0].stats_data);
+
+            let listDataStatsChar = new Array();
+
+            let i = 0
+            
+            for (var key in searchData) {
+
+                listDataStatsChar.push([key, searchData[key]]);
+                i++;
+            }
+
+             return listDataStatsChar;
+
+        } finally {
+            if (conn) conn.release(); //release to pool
+        }
+    
+    },
+
+    statsRoll: async function (message,mContent) {
+
+        var caracData = await (await utils.cClear(mContent,/\$/i)).split(' ');
+
+        var serverId = message.guildId;
+        var authorId = message.author.id;
+
+        let statsName = caracData[0];
+
+        let conn;
+        
+        try {
+
+            conn = await pool.getConnection();
+
+            let resultMain = await conn.query("SELECT id_main FROM MainLock WHERE id_player = ? AND id_server",[authorId,serverId]);
+
+            let idCharacter = await JSON.parse(resultMain[0].id_main);
+
+            let resultChar = await conn.query("SELECT * FROM `Character` WHERE id_charac = ?",[idCharacter]);
 
             
-            await conn.query("INSERT INTO ServerList (id_server,server_stats) VALUES (?,?) ON DUPLICATE KEY UPDATE ServerList SET server_stats = JSON_INSERT(server_stats, ?, ?) WHERE id_server = ?",[serverId,caracInit,idChar,idChar]);
-            //var result = await conn.query("SELECT * FROM NPC WHERE id_server = ? AND first_name = ? AND last_name = ?",[serverId,rpData[0],rpData[1]]);
-            //await conn.query("UPDATE NPC SET version_data = JSON_SET(version_data, ?, ?) WHERE id_server = ? AND first_name = ? AND last_name = ?",imageArrayNPC);
 
+            let searchDataChar = await JSON.parse(resultChar[0].stats_data);
+            let firstname = await resultChar[0].first_name;
+            let lastname = await resultChar[0].last_name;
 
-        } finally {
-            if (conn) conn.release(); //release to pool
-        }
-    
-    },
+            let resultDice = await conn.query("SELECT server_stats FROM ServerList WHERE id_server = ?",[serverId]);
 
+          
 
+            let searchDataDice = await JSON.parse(resultDice[0].server_stats);
 
-    test: async function () {
+            let advDice = [searchDataDice[statsName].name,searchDataDice[statsName].dice,searchDataDice[statsName].type,searchDataChar[statsName],firstname,lastname];
 
-        let conn;
-        
-        try {
-
-            conn = await pool.getConnection();
-
-
-            var result = await conn.query("SELECT * FROM NPC WHERE id_server = ? AND first_name = ? AND last_name = ?",[serverId,rpData[0],rpData[1]]);
-
-
+            console.log(advDice);
+            return advDice;
 
         } finally {
             if (conn) conn.release(); //release to pool
@@ -889,9 +1017,8 @@ module.exports = {
 
             conn = await pool.getConnection();
 
-
             var result = await conn.query("SELECT * FROM NPC WHERE id_server = ? AND first_name = ? AND last_name = ?",[serverId,rpData[0],rpData[1]]);
-
+            
 
 
         } finally {

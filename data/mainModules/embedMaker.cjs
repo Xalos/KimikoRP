@@ -15,6 +15,8 @@ const hexSet = {
     jade : 0x41F495,
     purple : 0x8C198C,
     kingGold : 0xFF9900,
+    failRed : 0xFF0000,
+    winGreen : 0x00FF00
 
 };
 
@@ -181,6 +183,26 @@ module.exports = {
 
          return embedResult;
     },
+    
+    advRoll: async function (rollData) {
+
+        rollMessage = rollData[0];
+        rollRolled = rollData[1];
+        rollResult = rollData[2];
+
+        const embedResult = await new this.EmbedBuilder()
+            
+            //Affiche l'image, le nom et la couleur du personnage
+            .setTitle("Jet __**"+rollData[4]+"**__ de **"+rollData[5]+" "+rollData[6]+" ...**")
+            .setDescription(rollMessage+" = ["+rollRolled+"] = **"+rollResult+"** = **"+rollData[3]+"**");
+            
+            if(rollData[3] == "Réussite")embedResult.setColor(hexSet.winGreen);
+            else embedResult.setColor(hexSet.failRed);
+		    
+
+         return embedResult;
+    },
+
     
     //Génère le
     ticket: async function (message,ask) {

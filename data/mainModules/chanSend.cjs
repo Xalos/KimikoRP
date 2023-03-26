@@ -53,10 +53,15 @@ module.exports = {
         if (msg == "unlock")return "unlock";
         
         //Si channel ban break
-        if((await nexus.channelf(message,"check")).length != 0)return "unlock";;
+        if((await nexus.channelf(message,"check")).length != 0)return "unlock";
             message.delete();
             await message.channel.send({ embeds: [msg[1]]})
                 .then(msgSend => { nexus.logRp(msg[0],msgSend,message.author.id)});
+        
+    },
+    rpRoll: function (message,msg) {
+        
+        message.channel.send({ embeds: [msg]});
         
     },
     embed: function (message,msg) {
